@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
-    <!-- Sidebar ka code bilkul theek hai, usko chherne ki zarurat nahi -->
+    <!-- Sidebar code is final and correct -->
     <aside id="sidebar">
         <div class="sidebar-header">
             <button class="sidebar-btn" id="new-chat-btn">
@@ -43,7 +43,7 @@
     <div id="overlay"></div>
 
     <div id="chat-container">
-        <!-- #### START OF FINAL HEADER PATCH #### -->
+        <!-- Header is final and correct -->
         <header id="chat-header">
             <button class="icon-btn" id="sidebar-open-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -53,8 +53,8 @@
                  <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17l-.59.59-.58.58V4h16v12z"/></svg>
             </button>
         </header>
-        <!-- #### END OF FINAL HEADER PATCH #### -->
         <main id="chat-log"></main>
+        <!-- Footer is final and correct -->
         <footer id="input-area">
             <div class="input-wrapper">
                 <div class="input-main-content">
@@ -74,6 +74,18 @@
             </div>
         </footer>
     </div>
+    <!-- #### START OF NEW HIDDEN ELEMENTS #### -->
+    <div id="regenerate-popup" class="hidden">
+        <button id="regenerate-confirm-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 128.5 27.5T720-690v-110h80v280H520v-80h168q-44-84-124-132t-184-48q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 142-45t102-125h86q-36 112-126.5 183T480-160Z"/></svg>
+            Regenerate Response
+        </button>
+    </div>
+    <div id="feedback-toast" class="hidden">
+        <span id="feedback-message"></span>
+        <button id="toast-close-btn">×</button>
+    </div>
+    <!-- #### END OF NEW HIDDEN ELEMENTS #### -->
     <script src="chat_logic.js"></script>
 </body>
 </html>
