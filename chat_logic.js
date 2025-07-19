@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false };
 
-    const saveState = () => localStorage.setItem('neuronix_chat_state_v3', JSON.stringify(state));
+    const saveState = () => localStorage.setItem('neuronix_chat_state_v4', JSON.stringify(state));
     const loadState = () => {
-        const saved = localStorage.getItem('neuronix_chat_state_v3');
+        const saved = localStorage.getItem('neuronix_chat_state_v4');
         if (saved) {
             state = JSON.parse(saved);
             if(state.isThinkingMode === undefined) state.isThinkingMode = false;
@@ -27,12 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    // #### START OF PATCH ####
     const renderWelcomeMessage = () => {
         chatLog.innerHTML = `<div class="welcome-message">
                                 <h1>Welcome to Synapse Pro</h1>
-                                <p>Choose from multiple AI models and start your intelligent conversation.</p>
+                                <p>Interface with a singular intelligence core. Your session starts now.</p>
                              </div>`;
     };
+    // #### END OF PATCH ####
     
     const renderChat = () => {
         chatLog.innerHTML = '';
@@ -52,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
             li.dataset.id = chat.id;
             li.innerHTML = `<span>${chat.title}</span>
                           <div class="actions">
-                            <button class="icon-btn edit-btn" title="Rename"><svg height="18" viewBox="0 -960 960 960" width="18"><path d="M200-200h56l345-345-56-56-345 345v56Zm572-403L602-771l56-56q23-23 56.5-23t56.5 23l56 56q23 23 23 56.5T829-602l-57 56Z"/></svg></button>
-                            <button class="icon-btn delete-btn" title="Delete"><svg height="18" viewBox="0 -960 960 960" width="18"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Z"/></svg></button>
+                            <button class="icon-btn edit-btn" title="Rename"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
+                            <button class="icon-btn delete-btn" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                           </div>`;
             li.onclick = () => switchChat(chat.id);
             li.querySelector('.edit-btn').onclick = (e) => { e.stopPropagation(); renameChat(chat.id); };
@@ -159,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
     const applyTheme = (isLight) => {
         document.documentElement.className = isLight ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme_light_v3', isLight);
+        localStorage.setItem('neuronix_theme_light_v4', isLight);
         themeToggle.checked = isLight;
     };
 
@@ -182,6 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     renderChat();
     renderSidebar();
-    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v3') || 'false'));
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v4') || 'false'));
     thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
 });
