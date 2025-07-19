@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
+    <!-- Sidebar ka code bilkul theek hai, usko chherne ki zarurat nahi -->
     <aside id="sidebar">
         <div class="sidebar-header">
-            <!-- #### START OF ICON PATCH #### -->
             <button class="sidebar-btn" id="new-chat-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 New chat
@@ -17,7 +17,6 @@
             <button class="sidebar-btn icon-btn" id="sidebar-close-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <!-- #### END OF ICON PATCH #### -->
         </div>
         <div class="chat-history-container">
             <p class="history-title">CHAT HISTORY</p>
@@ -44,15 +43,17 @@
     <div id="overlay"></div>
 
     <div id="chat-container">
+        <!-- #### START OF FINAL HEADER PATCH #### -->
         <header id="chat-header">
             <button class="icon-btn" id="sidebar-open-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M120-280v-80h720v80H120Zm0-160v-80h720v80H120Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
             </button>
             <h1 id="header-title">Synapse Pro</h1>
             <button class="icon-btn" id="header-new-chat-btn">
-                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M80-240v-480h800v400H240L80-240Zm80-80h584v-240H160v240Zm0 0v-240 240Z"/></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17l-.59.59-.58.58V4h16v12z"/></svg>
             </button>
         </header>
+        <!-- #### END OF FINAL HEADER PATCH #### -->
         <main id="chat-log"></main>
         <footer id="input-area">
             <div class="input-wrapper">
