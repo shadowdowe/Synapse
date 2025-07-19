@@ -92,7 +92,7 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 .action-btn.hidden { display: none; }
 #regenerate-popup { position: fixed; bottom: 95px; left: 50%; transform: translate(-50%, 200%); z-index: 20; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 #regenerate-popup.show { transform: translate(-50%, 0); }
-#regenerate-confirm-btn { background-color: var(--bg-element); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 20px; font-size: 1em; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+#regenerate-confirm-btn { background-color: var(--bg-element); color: var(--text-primary); border: none; border-radius: 12px; padding: 10px 20px; font-size: 1em; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 #regenerate-confirm-btn svg { fill: var(--text-primary); }
 #feedback-toast { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #FFFFFF; color: #111111; padding: 18px 25px; z-index: 2000; transform: translateY(100%); transition: transform 0.3s ease-out; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
 #feedback-toast.show { transform: translateY(0); }
@@ -101,6 +101,7 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 **File 3: `chat_logic.js` (Final Version)**
 ```javascript
 document.addEventListener('DOMContentLoaded', () => {
+    // Purane saare element selectors
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -271,15 +272,61 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     async function regenerateResponse() {
-        // ... (function logic remains the same)
+        const activeChat = state.chats[state.activeChatId];
+        if (!activeChat) return;
+        activeChat.messages.pop();
+        renderChat();
+        const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
+        try {
+            // ... (baaki logic same)
+        } catch (error) {
+            const errorMsg = `System Error: ${error.message}`;
+            aiBubble.innerHTML = errorMsg;
+        }
     }
 
     async function transmitQuery() {
-        // ... (function logic remains the same)
+        const query = userInput.value.trim();
+        if (!query) return;
+        state.lastUserQuery = query;
+        if(state.chats[state.activeChatId].messages.length === 0) chatLog.innerHTML = '';
+        appendMessage('user', query);
+        userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
+        const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
+        try {
+            let finalPrompt = query;
+            if(state.isThinkingMode) {
+                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. User Query: ${query}`;
+            }
+            const response = await fetch('/api/proxy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: finalPrompt })
+            });
+            if (!response.ok) {
+                 const errData = await response.json();
+                 throw new Error(errData.error || `Network error: ${response.status}`);
+            }
+            const fullText = await response.text();
+            aiBubble.parentElement.remove();
+            appendMessage('ai', fullText.replace(/\n/g, '<br>'));
+        } catch (error) {
+            const errorMsg = `System Error: ${error.message}`;
+            aiBubble.parentElement.remove();
+            appendMessage('ai', errorMsg, false);
+        } finally {
+            sendBtn.disabled = false; userInput.focus();
+        }
     }
     
     const addMessageToHistory = (sender, content) => {
-        // ... (function logic remains the same)
+        const activeChat = state.chats[state.activeChatId];
+        if (activeChat) {
+            activeChat.messages.push({ sender, content });
+            if (activeChat.title === 'New Conversation' && sender === 'user') {
+                activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
+            }
+            saveState(); renderSidebar();
+        }
     };
 
     let toastTimer;
@@ -299,4 +346,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const toggleThinkingMode = () => {
         state.isThinkingMode = !state.isThinkingMode;
-        thinkingModeBtn.classList.toggle('active', state.isThinki
+        thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
+        saveState();
+    };
+
+    openSidebarBtn.onclick = openSidebar;
+    overlay.onclick = () => {
+        closeSidebar();
+        regeneratePopup.classList.remove('show');
+    };
+    closeSidebarBtn.onclick = closeSidebar;
+    newChatBtn.onclick = () => startNewChat();
+    headerNewChatBtn.onclick = () => startNewChat();
+    sendBtn.onclick = transmitQuery;
+    userInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); transmitQuery(); } };
+    themeToggle.onchange = () => applyTheme(themeToggle.checked);
+    thinkingModeBtn.onclick = toggleThinkingMode;
+    
+    loadState();
+    renderChat();
+    renderSidebar();
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_final_v5') || 'false'));
+    thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
+}); 
