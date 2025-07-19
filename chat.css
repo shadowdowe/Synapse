@@ -84,9 +84,8 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 #overlay.active { opacity: 1; pointer-events: auto; }
 .loader { display: inline-block; width: 25px; height: 25px; border: 3px solid rgba(120,120,120,0.3); border-radius: 50%; border-top-color: var(--text-primary); animation: spin 1s ease-in-out infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* #### START OF NEW ACTION TOOLBAR CSS #### */
-.action-toolbar { display: flex; gap: 12px; margin-top: 10px; }
-.action-btn { background: none; border: none; color: var(--text-icon); cursor: pointer; padding: 0; opacity: 0.7; transition: opacity 0.2s; }
+.action-toolbar { display: flex; gap: 16px; margin-top: 12px; align-items: center; }
+.action-btn { background: none; border: none; cursor: pointer; padding: 0; opacity: 0.8; transition: opacity 0.2s; }
 .action-btn:hover { opacity: 1; }
 .action-btn svg { fill: var(--text-icon); }
 .action-btn.active svg { fill: var(--text-primary); }
@@ -98,4 +97,3 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 #feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: #FFF; color: #000; padding: 12px 20px; border-radius: 8px; z-index: 2000; transition: bottom 0.3s ease-in-out; display: flex; align-items: center; gap: 15px; }
 #feedback-toast.show { bottom: 20px; }
 #toast-close-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #555; }
-/* #### END OF NEW ACTION TOOLBAR CSS #### */
