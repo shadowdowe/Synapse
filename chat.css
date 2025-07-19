@@ -94,9 +94,10 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 #regenerate-popup.hidden { display: none; }
 #regenerate-confirm-btn { background-color: var(--bg-element); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 20px; font-size: 1em; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 #regenerate-confirm-btn svg { fill: var(--text-primary); }
+/* #### START OF FINAL PATCH #### */
 #feedback-toast {
     position: fixed;
-    bottom: -100%;
+    bottom: -100%; /* Start below view */
     left: 0;
     width: 100%;
     background-color: #FFFFFF;
@@ -111,7 +112,7 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
     box-sizing: border-box;
 }
 #feedback-toast.show {
-    bottom: 0;
+    bottom: 0; /* Slide into view */
 }
 #toast-close-btn {
     background: none;
@@ -120,4 +121,5 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
     cursor: pointer;
     color: #333;
     line-height: 1;
-              }
+}
+/* #### END OF FINAL PATCH #### */
