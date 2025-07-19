@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false };
 
-    const saveState = () => localStorage.setItem('neuronix_chat_state_v4', JSON.stringify(state));
+    const saveState = () => localStorage.setItem('neuronix_chat_state_v5', JSON.stringify(state));
     const loadState = () => {
-        const saved = localStorage.getItem('neuronix_chat_state_v4');
+        const saved = localStorage.getItem('neuronix_chat_state_v5');
         if (saved) {
             state = JSON.parse(saved);
             if(state.isThinkingMode === undefined) state.isThinkingMode = false;
@@ -27,14 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // #### START OF PATCH ####
+    // #### START OF FINAL PATCH ####
     const renderWelcomeMessage = () => {
         chatLog.innerHTML = `<div class="welcome-message">
-                                <h1>Welcome to Synapse Pro</h1>
+                                <h1>Welcome to Synapse</h1>
                                 <p>Interface with a singular intelligence core. Your session starts now.</p>
                              </div>`;
     };
-    // #### END OF PATCH ####
+    // #### END OF FINAL PATCH ####
     
     const renderChat = () => {
         chatLog.innerHTML = '';
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
     const applyTheme = (isLight) => {
         document.documentElement.className = isLight ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme_light_v4', isLight);
+        localStorage.setItem('neuronix_theme_light_v5', isLight);
         themeToggle.checked = isLight;
     };
 
@@ -184,6 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     renderChat();
     renderSidebar();
-    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v4') || 'false'));
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v5') || 'false'));
     thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
 });
