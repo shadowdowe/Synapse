@@ -4,6 +4,7 @@
     --text-dark: #111111;
     --text-light: #e0e0e0;
     --accent: #00BFFF; /* Deep Sky Blue Accent */
+    --border-color: #333;
 }
 
 body {
@@ -35,6 +36,8 @@ nav {
 .menu-icon {
     font-size: 1.5rem;
     cursor: pointer;
+    text-decoration: none;
+    color: var(--accent);
 }
 
 main {
@@ -98,16 +101,14 @@ p { max-width: 650px; margin: 1rem auto; font-size: 1.1rem; }
     box-shadow: 0 5px 10px rgba(0,0,0,0.3);
 }
 
-.image-placeholder {
-    border: 1px solid #333;
-    background-color: #181818;
-    border-radius: 8px;
-    padding: 2rem;
-    margin: 3rem auto;
+.hero-image {
+    width: 100%;
     max-width: 700px;
+    margin: 3rem auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: block;
 }
-.image-placeholder p { font-weight: bold; font-size: 1.2rem; }
-.image-placeholder span { font-size: 1rem; color: #aaa; }
 
 .testimonial {
     background: #1f1f1f;
