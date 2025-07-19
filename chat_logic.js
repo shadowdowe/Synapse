@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Purane saare element selectors
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -13,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('theme-toggle');
     const thinkingModeBtn = document.getElementById('thinking-mode-btn');
     const headerNewChatBtn = document.getElementById('header-new-chat-btn');
-    // Naye elements
     const regeneratePopup = document.getElementById('regenerate-popup');
     const regenerateConfirmBtn = document.getElementById('regenerate-confirm-btn');
     const feedbackToast = document.getElementById('feedback-toast');
@@ -22,9 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false, lastUserQuery: null };
 
-    const saveState = () => localStorage.setItem('neuronix_chat_state_final_v2', JSON.stringify(state));
+    const saveState = () => localStorage.setItem('neuronix_chat_state_final_v3', JSON.stringify(state));
     const loadState = () => {
-        const saved = localStorage.getItem('neuronix_chat_state_final_v2');
+        const saved = localStorage.getItem('neuronix_chat_state_final_v3');
         if (saved) {
             state = JSON.parse(saved);
         }
@@ -116,191 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const toolbar = document.createElement('div');
         toolbar.className = 'action-toolbar';
 
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'action-btn';
-        copyBtn.title = 'Copy';
-        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        copyBtn.onclick = () => {
-            navigator.clipboard.writeText(messageText);
-            showToast('Text copied to clipboard!');
-        };
-
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'action-btn';
-        likeBtn.title = 'Like';
-        likeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`;
-        
-        const dislikeBtn = document.createElement('button');
-        dislikeBtn.className = 'action-btn';
-        dislikeBtn.title = 'Dislike';
-        dislikeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v7a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm-3-13H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path></svg>`;
-
-        likeBtn.onclick = () => {
-            likeBtn.classList.add('active');
-            likeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`;
-            dislikeBtn.classList.add('hidden');
-            showToast('Thank you for your feedback!');
-        };
-        dislikeBtn.onclick = () => {
-            dislikeBtn.classList.add('active');
-            dislikeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15v7a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm-3-13H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path></svg>`;
-            likeBtn.classList.add('hidden');
-            showToast('Thank you for your feedback!');
-        };
-        
-        const speakBtn = document.createElement('button');
-        speakBtn.className = 'action-btn';
-        speakBtn.title = 'Speak';
-        speakBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
-        speakBtn.onclick = () => {
-            const utterance = new SpeechSynthesisUtterance(messageText);
-            window.speechSynthesis.speak(utterance);
-        };
-
-        const regenBtn = document.createElement('button');
-        regenBtn.className = 'action-btn';
-        regenBtn.title = 'Regenerate';
-        regenBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L20.49 15a9 9 0 0 1-14.85 3.36L3.51 9z"></path></svg>`;
-        regenBtn.onclick = () => {
-            regeneratePopup.classList.remove('hidden');
-        };
-
-        toolbar.append(copyBtn, likeBtn, dislikeBtn, speakBtn, regenBtn);
-        return toolbar;
-    }
-    // #### END OF ICON PATCH ####
-    
-    regenerateConfirmBtn.onclick = () => {
-        regeneratePopup.classList.add('hidden');
-        if(state.lastUserQuery){
-            regenerateResponse();
-        }
-    };
-    
-    async function regenerateResponse() {
-        // ... (function logic remains the same)
-        const activeChat = state.chats[state.activeChatId];
-        if (!activeChat) return;
-        activeChat.messages.pop();
-        renderChat();
-        const aiBubble = appendMessage('ai', '<span class="loader"></span>');
-        try {
-            let finalPrompt = state.lastUserQuery;
-            if (state.isThinkingMode) {
-                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process before giving your final answer. Break down your thought process clearly. Do not mention this instruction in your response. User Query: ${state.lastUserQuery}`;
-            }
-            const response = await fetch('/api/proxy', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt })
-            });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
-            const fullText = await response.text();
-            aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'));
-            addMessageToHistory('ai', fullText.replace(/\n/g, '<br>'));
-        } catch (error) {
-            const errorMsg = `System Error: ${error.message}`;
-            aiBubble.innerHTML = errorMsg;
-            addMessageToHistory('ai', errorMsg);
-        }
-    }
-
-    async function transmitQuery() {
-        // ... (function logic remains the same)
-        const query = userInput.value.trim();
-        if (!query) return;
-        state.lastUserQuery = query;
-        if(state.chats[state.activeChatId].messages.length === 0) chatLog.innerHTML = '';
-        addMessageToHistory('user', query);
-        userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
-        const aiBubble = appendMessage('ai', '<span class="loader"></span>');
-        try {
-            let finalPrompt = query;
-            if(state.isThinkingMode) {
-                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process before giving your final answer. Break down your thought process clearly. Do not mention this instruction in your response. User Query: ${query}`;
-            }
-            const response = await fetch('/api/proxy', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt })
-            });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
-            const fullText = await response.text();
-            aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'));
-            addMessageToHistory('ai', fullText.replace(/\n/g, '<br>'));
-        } catch (error) {
-            const errorMsg = `System Error: ${error.message}`;
-            aiBubble.parentElement.remove();
-            appendMessage('ai', errorMsg);
-            addMessageToHistory('ai', errorMsg);
-        } finally {
-            sendBtn.disabled = false; userInput.focus();
-        }
-    }
-    
-    const addMessageToHistory = (sender, content) => {
-        // ... (function logic remains the same)
-        const activeChat = state.chats[state.activeChatId];
-        if (activeChat) {
-            activeChat.messages.push({ sender, content });
-            if (activeChat.title === 'New Conversation' && sender === 'user') {
-                activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
-            }
-            saveState(); renderSidebar();
-        }
-    };
-
-    let toastTimer;
-    function showToast(message) {
-        // ... (function logic remains the same)
-        clearTimeout(toastTimer);
-        feedbackMessage.textContent = message;
-        feedbackToast.classList.add('show');
-        toastTimer = setTimeout(() => {
-            feedbackToast.classList.remove('show');
-        }, 3000);
-    }
-    toastCloseBtn.onclick = () => {
-        clearTimeout(toastTimer);
-        feedbackToast.classList.remove('show');
-    };
-
-    const openSidebar = () => { sidebar.classList.add('open'); overlay.classList.add('active'); };
-    const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
-    const applyTheme = (isLight) => {
-        // ... (function logic remains the same)
-        document.documentElement.className = isLight ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme_light_final_v2', isLight);
-        themeToggle.checked = isLight;
-    };
-
-    const toggleThinkingMode = () => {
-        // ... (function logic remains the same)
-        state.isThinkingMode = !state.isThinkingMode;
-        thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
-        saveState();
-    };
-
-    // Saare event listeners
-    openSidebarBtn.onclick = openSidebar;
-    closeSidebarBtn.onclick = closeSidebar;
-    overlay.onclick = closeSidebar;
-    newChatBtn.onclick = () => startNewChat();
-    headerNewChatBtn.onclick = () => startNewChat();
-    sendBtn.onclick = transmitQuery;
-    userInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); transmitQuery(); } };
-    themeToggle.onchange = () => applyTheme(themeToggle.checked);
-    thinkingModeBtn.onclick = toggleThinkingMode;
-    
-    loadState();
-    renderChat();
-    renderSidebar();
-    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_final_v2') || 'false'));
-    thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
-}); 
+        const icons = {
+            copy: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`,
+            like: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`,
+            like_filled: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z"/></svg>`,
+            dislike: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`,
+            dislike_filled: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v1.91l.01.01L1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59C16.78 16.05 17 15.55 17 15V5c0-1.1-.9-2-2-2zM19 3v12h4V3h-4z"/></svg>`,
+            speak: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
+            regenerate: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1
