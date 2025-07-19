@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false };
 
-    const saveState = () => localStorage.setItem('neuronix_chat_state_v2', JSON.stringify(state));
+    const saveState = () => localStorage.setItem('neuronix_chat_state_v3', JSON.stringify(state));
     const loadState = () => {
-        const saved = localStorage.getItem('neuronix_chat_state_v2');
+        const saved = localStorage.getItem('neuronix_chat_state_v3');
         if (saved) {
             state = JSON.parse(saved);
             if(state.isThinkingMode === undefined) state.isThinkingMode = false;
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
     const applyTheme = (isLight) => {
         document.documentElement.className = isLight ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme_light_v2', isLight);
+        localStorage.setItem('neuronix_theme_light_v3', isLight);
         themeToggle.checked = isLight;
     };
 
@@ -182,6 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     renderChat();
     renderSidebar();
-    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v2') || 'false'));
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_v3') || 'false'));
     thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
 });
