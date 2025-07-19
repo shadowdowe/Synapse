@@ -5,7 +5,7 @@
     --bg-history-item: #333333;
     --text-primary: #FFFFFF;
     --text-secondary: #b3b3b3;
-    --text-icon: #e0e0e0; /* Brighter icon color */
+    --text-icon: #FFFFFF; /* Changed to white */
     --border-color: #2a2a2e;
     --accent-red: #d32f2f;
     --accent-green: #1DB954;
@@ -18,7 +18,7 @@ html.light-theme {
     --bg-history-item: #ebebeb;
     --text-primary: #111111;
     --text-secondary: #555555;
-    --text-icon: #333333; /* Darker icon color for light theme */
+    --text-icon: #000000; /* Changed to black for light theme */
     --border-color: #dcdcdc;
 }
 body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color: var(--bg-main); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; transition: background-color 0.3s; }
@@ -26,6 +26,7 @@ body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color:
 #chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background-color: var(--bg-main); border-bottom: 1px solid var(--border-color); }
 #header-title { margin: 0; font-size: 1.2em; font-weight: 500; color: var(--text-secondary); }
 .icon-btn { font-size: 1.5em; cursor: pointer; color: var(--text-icon); background: none; border: none; padding: 5px; }
+.icon-btn svg { fill: var(--text-icon); } /* Makes SVG color follow the variable */
 #chat-log { flex-grow: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; }
 .welcome-message { text-align: center; margin: auto; padding: 2rem; }
 .welcome-message h1 { font-size: 2.2em; color: var(--text-primary); margin: 0 0 10px 0; font-weight: 600; }
