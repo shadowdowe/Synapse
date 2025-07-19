@@ -10,11 +10,11 @@
     <aside id="sidebar">
         <div class="sidebar-header">
             <button class="sidebar-btn" id="new-chat-btn">
-                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM11 11H9V9h2v2zm2-2h-2V7h2v2zm2 2h-2V9h2v2z"></path></svg>
-                New Chat
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 14H6.41l-2 2V4h16v12z"></path></svg>
+                New chat
             </button>
-            <button class="sidebar-btn" id="sidebar-close-btn">
-                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M17.77 3.77L16 2 6 12l10 10 1.77-1.77L9.54 12z"></path></svg>
+            <button class="sidebar-btn icon-btn" id="sidebar-close-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"></path></svg>
             </button>
         </div>
         <div class="chat-history-container">
@@ -23,14 +23,14 @@
         </div>
         <div class="sidebar-footer">
             <button class="sidebar-btn" id="clear-all-btn">
-                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                <svg class="delete-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
                 Clear All Chats
             </button>
             <div class="theme-switcher">
-                <span>Theme</span>
-                <div class="theme-options">
-                    <button class="theme-btn" data-theme="dark">☾</button>
-                    <button class="theme-btn" data-theme="light">☼</button>
+                <span class="theme-label">Theme</span>
+                <div class="theme-toggle-wrapper">
+                    <input type="checkbox" id="theme-toggle" class="theme-toggle">
+                    <label for="theme-toggle" class="theme-toggle-label"></label>
                 </div>
             </div>
         </div>
@@ -40,16 +40,28 @@
 
     <div id="chat-container">
         <header id="chat-header">
-            <button class="menu-icon" id="sidebar-open-btn">☰</button>
-            <h1>Synapse Pro</h1>
-            <div class="new-chat-icon" onclick="location.reload();">⟳</div>
+            <button class="icon-btn" id="sidebar-open-btn">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
+            </button>
+            <h1 id="header-title">Synapse Pro</h1>
+            <button class="icon-btn">
+                 <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17l-.59.59-.58.58V4h16v12z"></path></svg>
+            </button>
         </header>
         <main id="chat-log"></main>
         <footer id="input-area">
             <div class="input-wrapper">
-                <textarea id="user-input" placeholder="Ask your question..." rows="1"></textarea>
+                <div class="input-main-content">
+                    <textarea id="user-input" placeholder="Ask your question" rows="1"></textarea>
+                    <div class="input-meta">
+                        <div class="model-tag">
+                            <span class="model-name">Synapse Pro</span>
+                            <button id="thinking-mode-btn" title="Toggle Detailed Reasoning">💡</button>
+                        </div>
+                    </div>
+                </div>
                 <button id="send-btn" title="Transmit Query">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M120-160v-240l320-80-320-80v-240l760 320-760 320Z"/></svg>
                 </button>
             </div>
         </footer>
