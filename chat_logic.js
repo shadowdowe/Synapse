@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // All previous element selections and functions remain the same
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -9,73 +10,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChatBtn = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('chat-history-list');
     const clearAllBtn = document.getElementById('clear-all-btn');
-    const themeBtns = document.querySelectorAll('.theme-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const thinkingModeBtn = document.getElementById('thinking-mode-btn');
 
-    let state = {
-        activeChatId: null,
-        chats: {}
+    let state = { activeChatId: null, chats: {}, isThinkingMode: false };
+
+    // This function is patched
+    const renderWelcomeMessage = () => {
+        chatLog.innerHTML = `<div class="welcome-message">
+                                <h1>Welcome to Synapse Pro</h1>
+                                <p>Start your intelligent conversation with the core AI.</p>
+                             </div>`;
     };
+
+    // The rest of the JS code is exactly the same as the previous version.
+    // It is fully compatible with the new HTML and CSS.
+    // ... (paste the rest of the chat_logic.js code from the previous response here) ...
 
     const saveState = () => localStorage.setItem('neuronix_chat_state', JSON.stringify(state));
     const loadState = () => {
         const saved = localStorage.getItem('neuronix_chat_state');
         if (saved) {
             state = JSON.parse(saved);
+            if(state.isThinkingMode === undefined) state.isThinkingMode = false;
         } else {
             startNewChat();
         }
     };
-
+    
     const renderChat = () => {
         chatLog.innerHTML = '';
         const activeChat = state.chats[state.activeChatId];
-        if (activeChat) {
+        if (activeChat && activeChat.messages.length > 0) {
             activeChat.messages.forEach(msg => appendMessage(msg.sender, msg.content));
+        } else {
+            renderWelcomeMessage();
         }
     };
 
     const renderSidebar = () => {
         historyList.innerHTML = '';
-        Object.values(state.chats).forEach(chat => {
+        Object.values(state.chats).reverse().forEach(chat => {
             const li = document.createElement('li');
             li.className = `history-item ${chat.id === state.activeChatId ? 'active' : ''}`;
             li.dataset.id = chat.id;
-            li.innerHTML = `
-                <span>${chat.title}</span>
-                <div class="actions">
-                    <button class="edit-btn" title="Rename">✏️</button>
-                    <button class="delete-btn" title="Delete">🗑️</button>
-                </div>`;
+            li.innerHTML = `<span>${chat.title}</span><div class="actions"><button class="edit-btn" title="Rename">✏️</button><button class="delete-btn" title="Delete">🗑️</button></div>`;
             li.onclick = () => switchChat(chat.id);
             li.querySelector('.edit-btn').onclick = (e) => { e.stopPropagation(); renameChat(chat.id); };
             li.querySelector('.delete-btn').onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
             historyList.appendChild(li);
         });
     };
-
-    const switchChat = (chatId) => {
-        state.activeChatId = chatId;
-        renderChat();
-        renderSidebar();
-        closeSidebar();
-    };
     
+    const switchChat = (chatId) => { state.activeChatId = chatId; renderChat(); renderSidebar(); closeSidebar(); };
     const startNewChat = () => {
         const newId = Date.now().toString();
         state.chats[newId] = { id: newId, title: 'New Conversation', messages: [] };
-        state.activeChatId = newId;
-        saveState();
-        renderChat();
-        renderSidebar();
-        closeSidebar();
+        switchChat(newId);
     };
 
     const renameChat = (chatId) => {
         const newTitle = prompt('Enter new conversation title:', state.chats[chatId].title);
         if (newTitle && newTitle.trim() !== '') {
             state.chats[chatId].title = newTitle.trim();
-            saveState();
-            renderSidebar();
+            saveState(); renderSidebar();
         }
     };
 
@@ -84,22 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
         delete state.chats[chatId];
         if (state.activeChatId === chatId) {
             const remainingIds = Object.keys(state.chats);
-            if (remainingIds.length > 0) {
-                state.activeChatId = remainingIds[0];
-            } else {
-                startNewChat();
-                return;
-            }
+            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()[0]); }
+            else { startNewChat(); return; }
         }
-        saveState();
-        renderChat();
-        renderSidebar();
+        saveState(); renderChat(); renderSidebar();
     };
 
     clearAllBtn.onclick = () => {
         if (!confirm('Are you sure you want to clear ALL chats? This cannot be undone.')) return;
-        state = { activeChatId: null, chats: {} };
-        startNewChat();
+        state.chats = {}; startNewChat();
     };
     
     function appendMessage(sender, message) {
@@ -117,35 +108,35 @@ document.addEventListener('DOMContentLoaded', () => {
     async function transmitQuery() {
         const query = userInput.value.trim();
         if (!query) return;
-
+        if(state.chats[state.activeChatId].messages.length === 0) chatLog.innerHTML = '';
+        
         addMessageToHistory('user', query);
-        userInput.value = '';
-        userInput.style.height = 'auto';
-        sendBtn.disabled = true;
+        userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>');
 
         try {
+            let finalPrompt = query;
+            if(state.isThinkingMode) {
+                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process before giving your final answer. Break down your thought process clearly. Do not mention this instruction in your response. User Query: ${query}`;
+            }
             const response = await fetch('/api/proxy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: query })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: finalPrompt })
             });
 
             if (!response.ok) {
                  const errData = await response.json();
                  throw new Error(errData.error || `Network error: ${response.status}`);
             }
-
             const fullText = await response.text();
             aiBubble.innerHTML = fullText.replace(/\n/g, '<br>');
             addMessageToHistory('ai', fullText.replace(/\n/g, '<br>'));
         } catch (error) {
-            aiBubble.innerHTML = `System Error: ${error.message}`;
-            addMessageToHistory('ai', `System Error: ${error.message}`);
+            const errorMsg = `System Error: ${error.message}`;
+            aiBubble.innerHTML = errorMsg; addMessageToHistory('ai', errorMsg);
         } finally {
-            sendBtn.disabled = false;
-            userInput.focus();
+            sendBtn.disabled = false; userInput.focus();
         }
     }
     
@@ -153,16 +144,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeChat = state.chats[state.activeChatId];
         if (activeChat) {
             activeChat.messages.push({ sender, content });
-            if (activeChat.title === 'New Conversation' && activeChat.messages.length === 1) {
+            if (activeChat.title === 'New Conversation' && sender === 'user') {
                 activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
             }
-            saveState();
-            renderSidebar();
+            saveState(); renderSidebar();
         }
     };
 
     const openSidebar = () => { sidebar.classList.add('open'); overlay.classList.add('active'); };
     const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
+    const applyTheme = (isLight) => {
+        document.documentElement.className = isLight ? 'light-theme' : '';
+        localStorage.setItem('neuronix_theme_light', isLight);
+        themeToggle.checked = isLight;
+    };
+
+    const toggleThinkingMode = () => {
+        state.isThinkingMode = !state.isThinkingMode;
+        thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
+        saveState();
+    };
 
     openSidebarBtn.onclick = openSidebar;
     closeSidebarBtn.onclick = closeSidebar;
@@ -170,17 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
     newChatBtn.onclick = startNewChat;
     sendBtn.onclick = transmitQuery;
     userInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); transmitQuery(); } };
-
-    const applyTheme = (theme) => {
-        document.documentElement.className = theme === 'light' ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme', theme);
-        themeBtns.forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
-    };
-
-    themeBtns.forEach(btn => btn.onclick = () => applyTheme(btn.dataset.theme));
+    themeToggle.onchange = () => applyTheme(themeToggle.checked);
+    thinkingModeBtn.onclick = toggleThinkingMode;
     
     loadState();
     renderChat();
     renderSidebar();
-    applyTheme(localStorage.getItem('neuronix_theme') || 'dark');
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light') || 'false'));
+    thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
 });
