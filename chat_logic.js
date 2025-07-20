@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Saare element selectors, bilkul original jaise
+    // Saare element selectors
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false, lastUserQuery: null };
 
-    // State management bilkul original jaisa
     const saveState = () => localStorage.setItem('neuronix_chat_state_final_v5', JSON.stringify(state));
     const loadState = () => {
         const saved = localStorage.getItem('neuronix_chat_state_final_v5');
@@ -37,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatLog.innerHTML = `<div class="welcome-message"><h1>Welcome to Synapse</h1><p>Interface with a singular intelligence core. Your session starts now.</p></div>`;
     };
     
-    // Chat render logic, 100% original
     const renderChat = () => {
         chatLog.innerHTML = '';
         const activeChat = state.chats[state.activeChatId];
@@ -47,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             renderWelcomeMessage();
         }
+        hljs.highlightAll(); // Highlight any existing code
     };
 
     const renderSidebar = () => {
@@ -83,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         delete state.chats[chatId];
         if (state.activeChatId === chatId) {
             const remainingIds = Object.keys(state.chats);
-            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()[0]); }
+            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()); }
             else { startNewChat(); }
         }
         saveState(); renderChat(); renderSidebar();
@@ -102,12 +101,18 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.className = `message-wrapper sender-${sender.toLowerCase()}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.innerHTML = message;
+        
+        if (sender === 'ai') {
+            bubble.innerHTML = marked.parse(message); // Markdown ko HTML mein badlo
+        } else {
+            bubble.innerHTML = message;
+        }
+        
         wrapper.appendChild(bubble);
 
         const isLoader = message.includes('loader');
         if (sender === 'ai' && !isLoader) {
-            const toolbar = createActionToolbar(message);
+            const toolbar = createActionToolbar(message); // Raw message copy karne ke liye
             wrapper.appendChild(toolbar);
         }
         
@@ -117,6 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatLog.appendChild(wrapper);
         chatLog.scrollTop = chatLog.scrollHeight;
+        
+        // Naye code block ko highlight karo
+        bubble.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+
         return bubble;
     }
 
@@ -132,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
             speak: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
             regenerate: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`
         };
-
         const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = icons.copy;
         copyBtn.onclick = () => { navigator.clipboard.writeText(messageText); showToast('Text copied to clipboard!'); };
         const likeBtn = document.createElement('button'); likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = icons.like;
@@ -164,12 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // Regenerate logic, original jaisa
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || !state.lastUserQuery) return;
         
-        // Purana AI message history se aur screen se hatao
         activeChat.messages.pop();
         const lastMessageBubble = chatLog.querySelector('.message-wrapper:last-child');
         if(lastMessageBubble) lastMessageBubble.remove();
@@ -181,13 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: state.lastUserQuery })
             });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
+            if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Network error: ${response.status}`); }
             const fullText = await response.text();
             aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'), true);
+            appendMessage('ai', fullText, true);
         } catch (error) {
             const errorMsg = `System Error: ${error.message}`;
             aiBubble.parentElement.remove();
@@ -195,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Transmit Query, 100% original flow
     async function transmitQuery() {
         const query = userInput.value.trim();
         if (!query) return;
@@ -213,13 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: query })
             });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
+            if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Network error: ${response.status}`); }
             const fullText = await response.text();
             aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'), true);
+            appendMessage('ai', fullText, true);
         } catch (error) {
             const errorMsg = `System Error: ${error.message}`;
             aiBubble.parentElement.remove();
@@ -264,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     };
     
-    // Saare event listeners
     userInput.addEventListener('input', () => {
         userInput.style.height = 'auto';
         userInput.style.height = `${userInput.scrollHeight}px`;
@@ -280,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     themeToggle.onchange = () => applyTheme(themeToggle.checked);
     thinkingModeBtn.onclick = toggleThinkingMode;
     
-    // App start
     loadState();
     renderChat();
     renderSidebar();
