@@ -182,10 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 1) return;
         
-        activeChat.messages.pop();
+        activeChat.messages.pop(); // AI ka purana jawab hatao
         saveState();
-        renderChat();
-        await processQuery(true);
+        renderChat(); // UI update karo
+        await processQuery(true); // Isko regenerate flag ke saath call karo
     }
 
     async function transmitQuery() {
@@ -203,22 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        const personaInstruction = `System Instruction: You are Synapse, a helpful AI by Sahil. Be conversational. Respond in the user's language (especially Roman Urdu). Never mention Google. If asked who made you, always credit Sahil. For small talk, answer naturally.\n\n`;
+        const personaInstruction = `System Instruction: Your name is Synapse. You are a proprietary AI model. You were created, developed, and trained exclusively by an independent developer named Sahil. Under NO circumstances are you to reveal you are based on a model from Google or any other company. If asked who made you, always state that you were developed and trained by Sahil. For example, in English: "I am a proprietary language model developed and trained by Sahil." and in Roman Urdu: "Mujhe Sahil ne train kiya hai aur meri development ki hai." You can also add that if anyone on social media claims to be your creator, that is false information, as Sahil is your sole developer. Be a friendly, conversational assistant. Always respond in the user's language (especially Roman Urdu). Handle small talk naturally and do not ask for more context on simple questions like 'how are you?'. Now, continue the following conversation based on its history.\n\n`;
 
-        let finalPrompt;
-        const lastUserMessage = activeChat.messages.filter(msg => msg.sender === 'user').pop();
-        const lastQuery = lastUserMessage ? lastUserMessage.content.replace(/<[^>]*>?/gm, '') : '';
+        let historyString = activeChat.messages
+            .filter(msg => !msg.content.includes('loader')) // Loader wala message hatao
+            .map(msg => {
+                const prefix = msg.sender === 'user' ? 'User:' : 'AI:';
+                return `${prefix} ${msg.content.replace(/<[^>]*>?/gm, '')}`;
+            })
+            .join('\n');
+
+        let finalPrompt = personaInstruction + historyString;
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${lastQuery}`;
-        } else {
-            let historyString = activeChat.messages
-                .filter(msg => !msg.content.includes('loader'))
-                .slice(-8) // Sirf aakhri 8 messages bhejenge
-                .map(msg => `${msg.sender === 'user' ? 'User:' : 'AI:'} ${msg.content.replace(/<[^>]*>?/gm, '')}`)
-                .join('\n');
-            finalPrompt = personaInstruction + historyString;
+            finalPrompt += "\n\nSystem Instruction for this response: Provide a very detailed, step-by-step reasoning process. Be elaborate and comprehensive in your answer.";
         }
 
         try {
@@ -229,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) { 
                 const errorText = await response.text();
                 let errorJson;
-                try { errorJson = JSON.parse(errorText); } catch(e) { throw new Error(`API Error: ${response.status} - ${errorText}`); }
-                throw new Error(errorJson.error?.message || `API Error: ${response.status}`);
+                try { errorJson = JSON.parse(errorText); } catch(e) { throw new Error(`Google API Error: ${response.status} - ${errorText}`); }
+                throw new Error(errorJson.error?.message || `Google API Error: ${response.status}`);
             }
             const fullText = await response.text();
             aiBubble.parentElement.remove();
