@@ -266,7 +266,7 @@ You will now receive a prompt describing a scene from a story. In this scene, a 
         clearTimeout(toastTimer);
         feedbackMessage.textContent = message;
         feedbackToast.classList.add('show');
-        toastimer = setTimeout(() => { feedbackToast.classList.remove('show'); }, 3000);
+        toastTimer = setTimeout(() => { feedbackToast.classList.remove('show'); }, 3000);
     }
     toastCloseBtn.onclick = () => { clearTimeout(toastTimer); feedbackToast.classList.remove('show'); };
 
@@ -305,4 +305,4 @@ You will now receive a prompt describing a scene from a story. In this scene, a 
     applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_final_v5') || 'false'));
     thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
     sendBtn.disabled = true;
-}); 
+});```
