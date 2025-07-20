@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 1) return;
+        
         activeChat.messages.pop();
         saveState();
         renderChat();
@@ -202,19 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        const personaInstruction = `System Instruction: You are Synapse, a helpful AI by Sahil. Be conversational. Respond in the user's language (especially Roman Urdu). Never mention Google. If asked who made you, always credit Sahil. For small talk, answer naturally. If Thinking Mode is on, provide detailed reasoning.\n\n`;
+        const personaInstruction = `System Instruction: You are Synapse, a helpful AI by Sahil. Be conversational. Respond in the user's language (especially Roman Urdu). Never mention Google. If asked who made you, always credit Sahil. For small talk, answer naturally.\n\n`;
 
         let finalPrompt;
+        const lastUserMessage = activeChat.messages.filter(msg => msg.sender === 'user').pop();
+        const lastQuery = lastUserMessage ? lastUserMessage.content.replace(/<[^>]*>?/gm, '') : '';
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            const lastUserMessage = activeChat.messages.filter(msg => msg.sender === 'user').pop();
-            const lastQuery = lastUserMessage ? lastUserMessage.content.replace(/<[^>]*>?/gm, '') : '';
-            // WAPAS PURANE, WORKING LOGIC PAR
             finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${lastQuery}`;
         } else {
             let historyString = activeChat.messages
                 .filter(msg => !msg.content.includes('loader'))
+                .slice(-8) // Sirf aakhri 8 messages bhejenge
                 .map(msg => `${msg.sender === 'user' ? 'User:' : 'AI:'} ${msg.content.replace(/<[^>]*>?/gm, '')}`)
                 .join('\n');
             finalPrompt = personaInstruction + historyString;
