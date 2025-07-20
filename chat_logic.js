@@ -181,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 1) return;
-        
         activeChat.messages.pop();
         saveState();
         renderChat();
@@ -211,7 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
             thinkingModeBtn.classList.add('thinking-in-progress');
             const lastUserMessage = activeChat.messages.filter(msg => msg.sender === 'user').pop();
             const lastQuery = lastUserMessage ? lastUserMessage.content.replace(/<[^>]*>?/gm, '') : '';
-            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process for the following query: "${lastQuery}"`;
+            // WAPAS PURANE, WORKING LOGIC PAR
+            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${lastQuery}`;
         } else {
             let historyString = activeChat.messages
                 .filter(msg => !msg.content.includes('loader'))
