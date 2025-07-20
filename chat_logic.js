@@ -256,25 +256,35 @@ document.addEventListener('DOMContentLoaded', () => {
     function getSimulatedResponse(query) {
         const lowerQuery = query.toLowerCase().replace(/[?.,!]/g, '').trim();
         
+        if (lowerQuery.includes('roman urdu') || lowerQuery.includes('urdu mein baat')) {
+            return "Theek hai, ab se main Roman Urdu mein hi baat karunga. Poochiye kya poochna hai.";
+        }
         if (lowerQuery.includes('kaise ho') || lowerQuery.includes('kya haal hai')) {
             return "Main theek hoon, shukriya. Aap kaise hain? Main aapki madad ke liye tayyar hoon.";
-        } else if (lowerQuery.includes('baat suno')) {
-            return "Ji, main sun raha hoon. Boliye, main aapki kya madad kar sakta hoon?";
-        } else if (lowerQuery.includes('tum kon ho') || lowerQuery.includes('aap kon hai')) {
-             return "Mera naam Synapse hai aur main Neuronix platform ka AI core hoon, jise Sahil ne banaya hai.";
-        } else if (lowerQuery.includes('how are you')) {
-            return "I'm doing well, thank you for asking! As the Synapse core, I'm always operational and ready to assist you.";
-        } else if (lowerQuery.includes('who are you') || lowerQuery.includes('what is your name')) {
-            return "I am Synapse, the singular AI intelligence core for the Neuronix platform. I was created by Sahil to provide in-depth analysis.";
-        } else if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
-            return "Hello there! How can I help you solve a problem or understand a complex topic today?";
-        } else if (lowerQuery.includes('salam')) {
-            return "Walaikum Assalam! Main aapki kya madad kar sakta hoon?";
-        } else if (lowerQuery.includes('shukriya') || lowerQuery.includes('thank you') || lowerQuery.includes('thanks')) {
-            return "Aapka khair maqdam hai! Agar aur koi zaroorat ho to bataiye.";
-        } else {
-            return `That's an interesting query about "${query}". A real AI would now analyze this and provide a comprehensive answer. This is a demonstration of that process.`;
         }
+        if (lowerQuery.includes('baat suno') || lowerQuery.includes('baat karni')) {
+            return "Ji, main sun raha hoon. Boliye, main aapki kya madad kar sakta hoon?";
+        }
+        if (lowerQuery.includes('tum kon ho') || lowerQuery.includes('aap kon hai') || lowerQuery.includes('tumhara naam')) {
+             return "Mera naam Synapse hai aur main Neuronix platform ka AI core hoon, jise Sahil ne banaya hai.";
+        }
+        if (lowerQuery.includes('salam')) {
+            return "Walaikum Assalam! Main aapki kya madad kar sakta hoon?";
+        }
+        if (lowerQuery.includes('shukriya') || lowerQuery.includes('thank you') || lowerQuery.includes('thanks')) {
+            return "Aapka khair maqdam hai! Agar aur koi zaroorat ho to bataiye.";
+        }
+        if (lowerQuery.includes('how are you')) {
+            return "I'm doing well, thank you for asking! How may I assist you?";
+        }
+        if (lowerQuery.includes('who are you') || lowerQuery.includes('what is your name')) {
+            return "I am Synapse, the singular AI intelligence core for the Neuronix platform.";
+        }
+        if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
+            return "Hello there! How can I help you solve a problem or understand a complex topic today?";
+        }
+        
+        return `Main aapki baat samajh nahi saka: "${query}". Kya aap isse doosre lafzon mein pooch sakte hain?`;
     }
     
     async function processQuery(query, isRegeneration) {
