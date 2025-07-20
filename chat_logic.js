@@ -96,29 +96,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const codeBlocks = element.querySelectorAll('pre code');
         codeBlocks.forEach(block => {
             if(block.parentElement.querySelector('.code-block-header')) return;
-
             const pre = block.parentElement;
             const lang = block.className.replace('language-', '').trim() || 'code';
-
             const header = document.createElement('div');
             header.className = 'code-block-header';
-
             const langName = document.createElement('span');
             langName.className = 'language-name';
             langName.textContent = lang;
-
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-code-btn';
             copyBtn.innerHTML = `<svg height="14" viewBox="0 0 24 24" width="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy`;
-            
             copyBtn.onclick = () => {
                 navigator.clipboard.writeText(block.textContent);
                 copyBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyBtn.innerHTML = `<svg height="14" viewBox="0 0 24 24" width="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy`;
-                }, 2000);
+                setTimeout(() => { copyBtn.innerHTML = `<svg height="14" viewBox="0 0 24 24" width="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy`; }, 2000);
             };
-
             header.appendChild(langName);
             header.appendChild(copyBtn);
             pre.parentNode.insertBefore(header, pre);
@@ -126,40 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function appendMessage(sender, message, save = true) {
-        if (chatLog.querySelector('.welcome-message')) {
-             chatLog.innerHTML = '';
-        }
+        if (chatLog.querySelector('.welcome-message')) { chatLog.innerHTML = ''; }
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper sender-${sender.toLowerCase()}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        
-        if (sender === 'ai') {
-            bubble.innerHTML = marked.parse(message);
-        } else {
-            bubble.innerHTML = message;
-        }
-        
+        bubble.innerHTML = sender === 'ai' ? marked.parse(message) : message;
         wrapper.appendChild(bubble);
-
         const isLoader = message.includes('loader');
         if (sender === 'ai' && !isLoader) {
             const toolbar = createActionToolbar(message);
             wrapper.appendChild(toolbar);
             enhanceCodeBlocks(bubble);
         }
-        
-        if(save) {
-            addMessageToHistory(sender, message);
-        }
-
+        if(save) { addMessageToHistory(sender, message); }
         chatLog.appendChild(wrapper);
         chatLog.scrollTop = chatLog.scrollHeight;
-        
-        bubble.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
-        });
-
+        bubble.querySelectorAll('pre code').forEach(hljs.highlightBlock);
         return bubble;
     }
 
@@ -182,7 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
         likeBtn.onclick = () => { likeBtn.classList.add('active'); likeBtn.innerHTML = icons.like_filled; dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
         dislikeBtn.onclick = () => { dislikeBtn.classList.add('active'); dislikeBtn.innerHTML = icons.dislike_filled; likeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
         const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn'; speakBtn.title = 'Speak'; speakBtn.innerHTML = icons.speak;
-        speakBtn.onclick = () => { const utterance = new SpeechSynthesisUtterance(messageText.replace(/<[^>]*>?/gm, '')); window.speechSynthesis.speak(utterance); };
+        speakBtn.onclick = (e) => {
+            const btn = e.currentTarget;
+            if(btn.querySelector('.speaking-indicator')) return; // Already speaking
+            const utterance = new SpeechSynthesisUtterance(messageText.replace(/<[^>]*>?/gm, ''));
+            const indicator = document.createElement('div');
+            indicator.className = 'speaking-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            utterance.onstart = () => btn.appendChild(indicator);
+            utterance.onend = () => btn.removeChild(indicator);
+            utterance.onerror = () => btn.removeChild(indicator);
+            window.speechSynthesis.speak(utterance);
+        };
         const regenBtn = document.createElement('button'); regenBtn.className = 'action-btn'; regenBtn.title = 'Regenerate'; regenBtn.innerHTML = icons.regenerate;
         regenBtn.onclick = (e) => {
             e.stopPropagation(); const btn = e.currentTarget; const btnRect = btn.getBoundingClientRect(); const containerRect = document.getElementById('chat-container').getBoundingClientRect();
@@ -209,33 +195,33 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || !state.lastUserQuery) return;
-        
         activeChat.messages.pop();
         saveState();
         renderChat();
-        
         await processQuery(state.lastUserQuery);
     }
 
     async function transmitQuery() {
         const query = userInput.value.trim();
         if (!query) return;
-
         state.lastUserQuery = query;
         addMessageToHistory('user', query);
         appendMessage('user', query, false);
-
         userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
-        
         await processQuery(query);
     }
     
     async function processQuery(query) {
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
+        let finalPrompt = query;
+        if (state.isThinkingMode) {
+            thinkingModeBtn.classList.add('thinking-in-progress');
+            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${query}`;
+        }
         try {
             const response = await fetch('/api/proxy', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: query })
+                body: JSON.stringify({ prompt: finalPrompt })
             });
             if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Network error: ${response.status}`); }
             const fullText = await response.text();
@@ -247,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessage('ai', errorMsg, true);
         } finally {
             sendBtn.disabled = false; userInput.focus();
+            thinkingModeBtn.classList.remove('thinking-in-progress');
         }
     }
     
