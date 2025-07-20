@@ -258,17 +258,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lowerQuery.includes('kaise ho') || lowerQuery.includes('kya haal hai')) {
             return "Main theek hoon, shukriya. Aap kaise hain?";
         }
-        if (lowerQuery.includes('baat suno') || lowerQuery.includes('baat karni')) {
-            return "Ji, main sun raha hoon. Boliye?";
+        if (lowerQuery.includes('baat') && (lowerQuery.includes('pucho') || lowerQuery.includes('poochna') || lowerQuery.includes('karni') || lowerQuery.includes('suno'))) {
+            return "Ji, main sun raha hoon. Zaroor poochen, main aapki kya madad kar sakta hoon?";
+        }
+        if (lowerQuery.includes('sawal') || lowerQuery.includes('sawaal')) {
+             return "Ji, zaroor. Apna sawal poochen.";
         }
         if (lowerQuery.includes('tum kon ho') || lowerQuery.includes('aap kon hai') || lowerQuery.includes('tumhara naam')) {
              return "Mera naam Synapse hai. Main ek AI hoon jise Sahil ne banaya hai.";
         }
-        if (lowerQuery.includes('salam')) {
+        if (lowerQuery === 'salam' || lowerQuery === 'assalam o alaikum') {
             return "Walaikum Assalam! Main aapki kya madad kar sakta hoon?";
         }
         if (lowerQuery.includes('shukriya')) {
-            return "Koi baat nahi!";
+            return "Koi baat nahi! Khushi hui ke main aapke kaam aa saka.";
         }
         if (lowerQuery === 'hi' || lowerQuery === 'hello') {
             return "Hello! How can I help you today?";
