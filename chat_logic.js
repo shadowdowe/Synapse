@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Purane saare element selectors
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -13,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('theme-toggle');
     const thinkingModeBtn = document.getElementById('thinking-mode-btn');
     const headerNewChatBtn = document.getElementById('header-new-chat-btn');
-    // Naye elements
     const regeneratePopup = document.getElementById('regenerate-popup');
     const regenerateConfirmBtn = document.getElementById('regenerate-confirm-btn');
     const feedbackToast = document.getElementById('feedback-toast');
@@ -22,9 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { activeChatId: null, chats: {}, isThinkingMode: false, lastUserQuery: null };
 
-    const saveState = () => localStorage.setItem('neuronix_chat_state_final_v3', JSON.stringify(state));
+    const saveState = () => localStorage.setItem('neuronix_chat_state_final_v5', JSON.stringify(state));
+    
     const loadState = () => {
-        const saved = localStorage.getItem('neuronix_chat_state_final_v3');
+        const saved = localStorage.getItem('neuronix_chat_state_final_v5');
         if (saved) {
             state = JSON.parse(saved);
         }
@@ -41,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatLog.innerHTML = '';
         const activeChat = state.chats[state.activeChatId];
         if (activeChat && activeChat.messages.length > 0) {
-            activeChat.messages.forEach(msg => appendMessage(msg.sender, msg.content));
+            activeChat.messages.forEach(msg => appendMessage(msg.sender, msg.content, false));
             state.lastUserQuery = activeChat.messages.filter(m => m.sender === 'user').pop()?.content || null;
         } else {
             renderWelcomeMessage();
@@ -62,18 +61,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const switchChat = (chatId) => { state.activeChatId = chatId; renderChat(); renderSidebar(); closeSidebar(); };
+    const switchChat = (chatId) => {
+        regeneratePopup.classList.remove('show');
+        state.activeChatId = chatId;
+        renderChat();
+        renderSidebar();
+        closeSidebar();
+    };
+
     const startNewChat = (shouldCloseSidebar = true) => {
+        regeneratePopup.classList.remove('show');
         const newId = Date.now().toString();
         state.chats[newId] = { id: newId, title: 'New Conversation', messages: [] };
         switchChat(newId);
+        if (shouldCloseSidebar) {
+            closeSidebar();
+        }
     };
 
     const renameChat = (chatId) => {
         const newTitle = prompt('Enter new conversation title:', state.chats[chatId].title);
         if (newTitle && newTitle.trim() !== '') {
             state.chats[chatId].title = newTitle.trim();
-            saveState(); renderSidebar();
+            saveState();
+            renderSidebar();
         }
     };
 
@@ -82,41 +93,51 @@ document.addEventListener('DOMContentLoaded', () => {
         delete state.chats[chatId];
         if (state.activeChatId === chatId) {
             const remainingIds = Object.keys(state.chats);
-            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()[0]); }
-            else { startNewChat(); return; }
+            if (remainingIds.length > 0) {
+                switchChat(remainingIds.reverse()[0]);
+            } else {
+                startNewChat();
+            }
         }
-        saveState(); renderChat(); renderSidebar();
+        saveState();
+        renderSidebar();
     };
 
     clearAllBtn.onclick = () => {
         if (!confirm('Are you sure you want to clear ALL chats?')) return;
-        state.chats = {}; startNewChat();
+        state.chats = {};
+        startNewChat();
+        saveState();
     };
     
-    // #### START OF PATCH ####
-    function appendMessage(sender, message) {
+    function appendMessage(sender, message, save = true) {
+        if (chatLog.querySelector('.welcome-message')) {
+            chatLog.innerHTML = '';
+        }
+
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper sender-${sender.toLowerCase()}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
         bubble.innerHTML = message;
-        wrapper.appendChild(bubble); // Yeh line pehle galat thi, ab theek hai
+        wrapper.appendChild(bubble);
 
-        if (sender === 'ai') {
+        const isLoader = message.includes('loader');
+        if (sender === 'ai' && !isLoader) {
             const toolbar = createActionToolbar(message);
             wrapper.appendChild(toolbar);
         }
         
-        chatLog.appendChild(wrapper); // Yeh line add ki gayi hai taaki message chat mein dikhe
+        if (save) {
+            addMessageToHistory(sender, message);
+        }
+
+        chatLog.appendChild(wrapper);
         chatLog.scrollTop = chatLog.scrollHeight;
         return bubble;
     }
-    // #### END OF PATCH ####
 
     function createActionToolbar(messageText) {
-        const toolbar = document.createElement('div');
-        toolbar.className = 'action-toolbar';
-
         const icons = {
             copy: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`,
             like: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`,
@@ -126,54 +147,66 @@ document.addEventListener('DOMContentLoaded', () => {
             speak: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
             regenerate: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`
         };
-
+        const toolbar = document.createElement('div');
+        toolbar.className = 'action-toolbar';
+        
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'action-btn';
-        copyBtn.title = 'Copy';
-        copyBtn.innerHTML = icons.copy;
-        copyBtn.onclick = () => {
-            navigator.clipboard.writeText(messageText);
-            showToast('Text copied to clipboard!');
-        };
-
+        copyBtn.className = 'action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = icons.copy;
+        copyBtn.onclick = () => { navigator.clipboard.writeText(messageText); showToast('Text copied to clipboard!'); };
+        
         const likeBtn = document.createElement('button');
-        likeBtn.className = 'action-btn';
-        likeBtn.title = 'Like';
-        likeBtn.innerHTML = icons.like;
+        likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = icons.like;
         
         const dislikeBtn = document.createElement('button');
-        dislikeBtn.className = 'action-btn';
-        dislikeBtn.title = 'Dislike';
-        dislikeBtn.innerHTML = icons.dislike;
-
+        dislikeBtn.className = 'action-btn'; dislikeBtn.title = 'Dislike'; dislikeBtn.innerHTML = icons.dislike;
+        
         likeBtn.onclick = () => {
-            likeBtn.classList.add('active');
-            likeBtn.innerHTML = icons.like_filled;
-            dislikeBtn.classList.add('hidden');
-            showToast('Thank you for your feedback!');
+            likeBtn.classList.toggle('active');
+            likeBtn.innerHTML = likeBtn.classList.contains('active') ? icons.like_filled : icons.like;
+            dislikeBtn.classList.remove('active', 'hidden');
+            dislikeBtn.innerHTML = icons.dislike;
+            if (likeBtn.classList.contains('active')) {
+                dislikeBtn.classList.add('hidden');
+                showToast('Thank you for your feedback!');
+            }
         };
         dislikeBtn.onclick = () => {
-            dislikeBtn.classList.add('active');
-            dislikeBtn.innerHTML = icons.dislike_filled;
-            likeBtn.classList.add('hidden');
-            showToast('Thank you for your feedback!');
+            dislikeBtn.classList.toggle('active');
+            dislikeBtn.innerHTML = dislikeBtn.classList.contains('active') ? icons.dislike_filled : icons.dislike;
+            likeBtn.classList.remove('active', 'hidden');
+            likeBtn.innerHTML = icons.like;
+            if (dislikeBtn.classList.contains('active')) {
+                likeBtn.classList.add('hidden');
+                showToast('Thank you for your feedback!');
+            }
         };
         
         const speakBtn = document.createElement('button');
-        speakBtn.className = 'action-btn';
-        speakBtn.title = 'Speak';
-        speakBtn.innerHTML = icons.speak;
+        speakBtn.className = 'action-btn'; speakBtn.title = 'Speak'; speakBtn.innerHTML = icons.speak;
         speakBtn.onclick = () => {
             const utterance = new SpeechSynthesisUtterance(messageText.replace(/<[^>]*>?/gm, ''));
             window.speechSynthesis.speak(utterance);
         };
-
+        
         const regenBtn = document.createElement('button');
-        regenBtn.className = 'action-btn';
-        regenBtn.title = 'Regenerate';
-        regenBtn.innerHTML = icons.regenerate;
-        regenBtn.onclick = () => {
-            regeneratePopup.classList.remove('hidden');
+        regenBtn.className = 'action-btn'; regenBtn.title = 'Regenerate'; regenBtn.innerHTML = icons.regenerate;
+        regenBtn.onclick = (e) => {
+            e.stopPropagation();
+            const btn = e.currentTarget;
+            const btnRect = btn.getBoundingClientRect();
+            const containerRect = document.getElementById('chat-container').getBoundingClientRect();
+
+            regeneratePopup.style.left = `${btnRect.left - containerRect.left + (btnRect.width / 2)}px`;
+            regeneratePopup.style.top = `${btnRect.bottom - containerRect.top + 8}px`;
+            regeneratePopup.classList.add('show');
+            
+            const hideOnClickOutside = (event) => {
+                if (!regeneratePopup.contains(event.target) && !btn.contains(event.target)) {
+                    regeneratePopup.classList.remove('show');
+                    document.removeEventListener('click', hideOnClickOutside, true);
+                }
+            };
+            document.addEventListener('click', hideOnClickOutside, true);
         };
 
         toolbar.append(copyBtn, likeBtn, dislikeBtn, speakBtn, regenBtn);
@@ -181,86 +214,88 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     regenerateConfirmBtn.onclick = () => {
-        regeneratePopup.classList.add('hidden');
+        regeneratePopup.classList.remove('show');
         if(state.lastUserQuery){
             regenerateResponse();
         }
     };
     
     async function regenerateResponse() {
-        const activeChat = state.chats[state.activeChatId];
-        if (!activeChat) return;
-        activeChat.messages.pop();
-        renderChat();
-        const aiBubble = appendMessage('ai', '<span class="loader"></span>');
-        try {
-            let finalPrompt = state.lastUserQuery;
-            if (state.isThinkingMode) {
-                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. User Query: ${state.lastUserQuery}`;
-            }
-            const response = await fetch('/api/proxy', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt })
-            });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
-            const fullText = await response.text();
-            aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'));
-            addMessageToHistory('ai', fullText.replace(/\n/g, '<br>'));
-        } catch (error) {
-            const errorMsg = `System Error: ${error.message}`;
-            aiBubble.innerHTML = errorMsg;
-            addMessageToHistory('ai', errorMsg);
+        if (!state.lastUserQuery) return;
+        
+        const messages = state.chats[state.activeChatId].messages;
+        if (messages.length > 0 && messages[messages.length - 1].sender === 'ai') {
+            messages.pop();
         }
+        
+        const lastAiWrapper = chatLog.querySelector('.message-wrapper.sender-ai:last-of-type');
+        if (lastAiWrapper) {
+            lastAiWrapper.remove();
+        }
+        
+        await processQuery(state.lastUserQuery, true);
     }
 
     async function transmitQuery() {
         const query = userInput.value.trim();
         if (!query) return;
-        state.lastUserQuery = query;
-        if(state.chats[state.activeChatId].messages.length === 0) chatLog.innerHTML = '';
+
         addMessageToHistory('user', query);
-        userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
-        const aiBubble = appendMessage('ai', '<span class="loader"></span>');
+        appendMessage('user', query, false); 
+        
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendBtn.disabled = true;
+        state.lastUserQuery = query;
+
+        await processQuery(query, false);
+    }
+
+    function getSimulatedResponse(query) {
+        const lowerQuery = query.toLowerCase();
+        if (lowerQuery.includes('how are you')) {
+            return "I'm doing well, thank you for asking! As the Synapse core, I'm always operational and ready to assist you.";
+        } else if (lowerQuery.includes('who are you') || lowerQuery.includes('what is your name')) {
+            return "I am Synapse, the singular AI intelligence core for the Neuronix platform. I was created by Sahil to provide in-depth analysis.";
+        } else if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
+            return "Hello there! How can I help you solve a problem or understand a complex topic today?";
+        } else if (lowerQuery.includes('thank you') || lowerQuery.includes('thanks')) {
+            return "You are most welcome! I'm here if you need anything else.";
+        } else {
+            return `That's an interesting query about "${query}". A real AI would now analyze this and provide a comprehensive answer. This is a demonstration of that process.`;
+        }
+    }
+    
+    async function processQuery(query, isRegeneration) {
+        const loaderBubble = appendMessage('ai', '<span class="loader"></span>', false);
+
         try {
-            let finalPrompt = query;
-            if(state.isThinkingMode) {
-                finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. User Query: ${query}`;
-            }
-            const response = await fetch('/api/proxy', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt })
-            });
-            if (!response.ok) {
-                 const errData = await response.json();
-                 throw new Error(errData.error || `Network error: ${response.status}`);
-            }
-            const fullText = await response.text();
-            aiBubble.parentElement.remove();
-            appendMessage('ai', fullText.replace(/\n/g, '<br>'));
-            addMessageToHistory('ai', fullText.replace(/\n/g, '<br>'));
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const responseText = getSimulatedResponse(query);
+
+            loaderBubble.parentElement.remove();
+            appendMessage('ai', responseText, true);
+
         } catch (error) {
-            const errorMsg = `System Error: ${error.message}`;
-            aiBubble.parentElement.remove();
-            appendMessage('ai', errorMsg);
-            addMessageToHistory('ai', errorMsg);
-        } finally {
-            sendBtn.disabled = false; userInput.focus();
+            const errorText = 'System Error: Could not get a response.';
+            loaderBubble.parentElement.remove();
+            appendMessage('ai', errorText, true);
         }
     }
     
     const addMessageToHistory = (sender, content) => {
         const activeChat = state.chats[state.activeChatId];
-        if (activeChat) {
-            activeChat.messages.push({ sender, content });
-            if (activeChat.title === 'New Conversation' && sender === 'user') {
-                activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
-            }
-            saveState(); renderSidebar();
+        if (!activeChat) return;
+
+        if (activeChat.title === 'New Conversation' && sender === 'user') {
+            const newTitle = content.substring(0, 35) + (content.length > 35 ? '...' : '');
+            activeChat.title = newTitle;
+            renderSidebar();
         }
+        
+        activeChat.messages.push({ sender, content });
+        saveState();
     };
 
     let toastTimer;
@@ -268,42 +303,50 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(toastTimer);
         feedbackMessage.textContent = message;
         feedbackToast.classList.add('show');
-        toastTimer = setTimeout(() => {
-            feedbackToast.classList.remove('show');
-        }, 3000);
+        toastTimer = setTimeout(() => { feedbackToast.classList.remove('show'); }, 3000);
     }
-    toastCloseBtn.onclick = () => {
-        clearTimeout(toastTimer);
-        feedbackToast.classList.remove('show');
-    };
+
+    toastCloseBtn.onclick = () => { clearTimeout(toastTimer); feedbackToast.classList.remove('show'); };
 
     const openSidebar = () => { sidebar.classList.add('open'); overlay.classList.add('active'); };
-    const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
+    const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); regeneratePopup.classList.remove('show'); };
+    
     const applyTheme = (isLight) => {
         document.documentElement.className = isLight ? 'light-theme' : '';
-        localStorage.setItem('neuronix_theme_light_final_v3', isLight);
+        localStorage.setItem('neuronix_theme_light_final_v5', isLight);
         themeToggle.checked = isLight;
     };
 
     const toggleThinkingMode = () => {
         state.isThinkingMode = !state.isThinkingMode;
         thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
-        saveState();
     };
 
+    userInput.addEventListener('input', () => {
+        userInput.style.height = 'auto';
+        userInput.style.height = `${userInput.scrollHeight}px`;
+        sendBtn.disabled = userInput.value.trim().length === 0;
+    });
+
+    sendBtn.onclick = transmitQuery;
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if(!sendBtn.disabled) transmitQuery();
+        }
+    });
+    
     openSidebarBtn.onclick = openSidebar;
     closeSidebarBtn.onclick = closeSidebar;
     overlay.onclick = closeSidebar;
-    newChatBtn.onclick = () => startNewChat();
-    headerNewChatBtn.onclick = () => startNewChat();
-    sendBtn.onclick = transmitQuery;
-    userInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); transmitQuery(); } };
-    themeToggle.onchange = () => applyTheme(themeToggle.checked);
+    newChatBtn.onclick = startNewChat;
+    headerNewChatBtn.onclick = startNewChat;
     thinkingModeBtn.onclick = toggleThinkingMode;
-    
+    themeToggle.onchange = () => applyTheme(themeToggle.checked);
+
     loadState();
     renderChat();
     renderSidebar();
-    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_final_v3') || 'false'));
-    thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
-}); 
+    applyTheme(localStorage.getItem('neuronix_theme_light_final_v5') === 'true');
+    sendBtn.disabled = true;
+});``` 
