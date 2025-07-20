@@ -40,7 +40,7 @@ export default async function handler(req, res) {
             if (apiResponse.status === 429) {
                  return res.status(429).json({ error: 'Rate limit exceeded. Too many requests to DeepSeek API.' });
             }
-            throw new Error(`DeepSeek API Error: ${apiResponse.status} - ${errorText}`);
+            throw new Error(`DeepSeek API Error: ${apiResponse.status}`);
         }
 
         const data = await apiResponse.json();
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         res.status(200).json({ text: aiText });
 
     } catch (error) {
-        console.error(error);
+        console.error('Error in proxy function:', error);
         res.status(500).json({ error: error.message });
     }
 }
