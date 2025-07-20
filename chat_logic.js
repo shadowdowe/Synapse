@@ -248,6 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await processQuery(query, false);
     }
+
+    function getSimulatedResponse(query) {
+        const lowerQuery = query.toLowerCase();
+        if (lowerQuery.includes('how are you')) {
+            return "I'm doing well, thank you for asking! As the Synapse core, I'm always operational and ready to assist you.";
+        } else if (lowerQuery.includes('who are you') || lowerQuery.includes('what is your name')) {
+            return "I am Synapse, the singular AI intelligence core for the Neuronix platform. I was created by Sahil to provide in-depth analysis.";
+        } else if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
+            return "Hello there! How can I help you solve a problem or understand a complex topic today?";
+        } else if (lowerQuery.includes('thank you') || lowerQuery.includes('thanks')) {
+            return "You are most welcome! I'm here if you need anything else.";
+        } else {
+            return `That's an interesting query about "${query}". A real AI would now analyze this and provide a comprehensive answer. This is a demonstration of that process.`;
+        }
+    }
     
     async function processQuery(query, isRegeneration) {
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
@@ -255,12 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
             
-            let responseText = `This is a simulated response for: "${query}".`;
-            if (isRegeneration) {
-                responseText += `<br>Regeneration status: true.`
-            } else {
-                responseText += `<br>Regeneration status: false.`
-            }
+            const responseText = getSimulatedResponse(query);
 
             aiBubble.innerHTML = responseText;
             
@@ -342,4 +352,4 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSidebar();
     applyTheme(localStorage.getItem('neuronix_theme_light_final_v5') === 'true');
     sendBtn.disabled = true;
-}); 
+});``` 
