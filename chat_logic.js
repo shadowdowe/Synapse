@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Saare element selectors
+    // Saare element selectors bilkul theek hain
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -141,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function createActionToolbar(messageText) {
         const toolbar = document.createElement('div');
         toolbar.className = 'action-toolbar';
-        const icons = { /* Icons object same as before */ };
         const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
         copyBtn.onclick = () => { navigator.clipboard.writeText(messageText); showToast('Text copied to clipboard!'); };
         const likeBtn = document.createElement('button'); likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`;
@@ -181,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
-        if (!activeChat || activeChat.messages.length < 2) return;
+        if (!activeChat || activeChat.messages.length < 1) return;
         
         activeChat.messages.pop(); // AI ka purana jawab hatao
         saveState();
@@ -204,22 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        // History ko ek simple string mein badlo
+        const personaInstruction = "System Instruction: You are Synapse, a helpful and friendly AI assistant created by Sahil. Your goal is to be conversational. Always respond in the user's language. If the user speaks in Roman Urdu or Hindi, you MUST reply in Roman Urdu. Handle greetings and small talk naturally and do not ask for more context on simple questions like 'how are you?'. Now, continue the following conversation based on its history.\n\n";
+
         let historyString = activeChat.messages
-            .slice(0, -1) // Loader wala message hatao
+            .filter(msg => !msg.content.includes('loader')) // Loader wala message hatao
             .map(msg => {
                 const prefix = msg.sender === 'user' ? 'User:' : 'AI:';
                 return `${prefix} ${msg.content.replace(/<[^>]*>?/gm, '')}`;
             })
-            .join('\n\n');
+            .join('\n');
 
-        let finalPrompt = historyString;
+        let finalPrompt = personaInstruction + historyString;
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            const lastUserMessage = activeChat.messages.find(m => m.sender === 'user');
-            const instructedQuery = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. Based on the conversation history, answer the last user query: "${lastUserMessage.content}"`;
-            finalPrompt = historyString.replace(lastUserMessage.content, instructedQuery);
+            finalPrompt += "\n\nSystem Instruction for this response: Provide a very detailed, step-by-step reasoning process. Be elaborate and comprehensive in your answer.";
         }
 
         try {
@@ -230,19 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) { 
                 const errorText = await response.text();
                 let errorJson;
-                try {
-                    errorJson = JSON.parse(errorText);
-                } catch(e) {
-                    throw new Error(`Google API Error: ${response.status} - ${errorText}`);
-                }
-                throw new Error(errorJson.error || `Google API Error: ${response.status}`);
+                try { errorJson = JSON.parse(errorText); } catch(e) { throw new Error(`Google API Error: ${response.status} - ${errorText}`); }
+                throw new Error(errorJson.error?.message || `Google API Error: ${response.status}`);
             }
             const fullText = await response.text();
             aiBubble.parentElement.remove();
             
             if (isRegenerating) {
-                activeChat.messages.push({ sender: 'ai', content: fullText });
-                saveState();
+                // Purana AI message hata kar naya add karo
+                activeChat.messages.pop(); 
+                addMessageToHistory('ai', fullText);
                 renderChat();
             } else {
                 appendMessage('ai', fullText, true);
