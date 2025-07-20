@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const feedbackMessage = document.getElementById('feedback-message');
     const toastCloseBtn = document.getElementById('toast-close-btn');
 
-    let state = { activeChatId: null, chats: {}, isThinkingMode: false, lastUserQuery: null };
+    let state = { activeChatId: null, chats: {}, isThinkingMode: false };
 
     const saveState = () => localStorage.setItem('neuronix_chat_state_final_v5', JSON.stringify(state));
     const loadState = () => {
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeChat = state.chats[state.activeChatId];
         if (activeChat && activeChat.messages.length > 0) {
             activeChat.messages.forEach(msg => appendMessage(msg.sender, msg.content, false));
-            state.lastUserQuery = activeChat.messages.filter(m => m.sender === 'user').pop()?.content || null;
         } else {
             renderWelcomeMessage();
         }
@@ -81,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         delete state.chats[chatId];
         if (state.activeChatId === chatId) {
             const remainingIds = Object.keys(state.chats);
-            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()); }
+            if (remainingIds.length > 0) { switchChat(remainingIds.reverse()[0]); }
             else { startNewChat(); }
         }
         saveState(); renderChat(); renderSidebar();
@@ -97,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
         codeBlocks.forEach(block => {
             if(block.parentElement.querySelector('.code-block-header')) return;
             const pre = block.parentElement;
-            const lang = block.className.replace('language-', '').trim() || 'code';
+            const langMatch = block.className.match(/language-(\S+)/);
+            const lang = langMatch ? langMatch[1] : 'code';
             const header = document.createElement('div');
             header.className = 'code-block-header';
             const langName = document.createElement('span');
@@ -141,35 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function createActionToolbar(messageText) {
         const toolbar = document.createElement('div');
         toolbar.className = 'action-toolbar';
-        const icons = {
-            copy: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`,
-            like: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`,
-            like_filled: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z"/></svg>`,
-            dislike: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14-.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17-.79-.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`,
-            dislike_filled: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14-.73v1.91l.01.01L1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17-.79-.44 1.06L9.83 23l6.59-6.59C16.78 16.05 17 15.55 17 15V5c0-1.1-.9-2-2-2zM19 3v12h4V3h-4z"/></svg>`,
-            speak: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
-            regenerate: `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`
-        };
-        const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = icons.copy;
+        const icons = { /* Icons object same as before */ };
+        const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.title = 'Copy'; copyBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
         copyBtn.onclick = () => { navigator.clipboard.writeText(messageText); showToast('Text copied to clipboard!'); };
-        const likeBtn = document.createElement('button'); likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = icons.like;
-        const dislikeBtn = document.createElement('button'); dislikeBtn.className = 'action-btn'; dislikeBtn.title = 'Dislike'; dislikeBtn.innerHTML = icons.dislike;
-        likeBtn.onclick = () => { likeBtn.classList.add('active'); likeBtn.innerHTML = icons.like_filled; dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
-        dislikeBtn.onclick = () => { dislikeBtn.classList.add('active'); dislikeBtn.innerHTML = icons.dislike_filled; likeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
-        const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn'; speakBtn.title = 'Speak'; speakBtn.innerHTML = icons.speak;
+        const likeBtn = document.createElement('button'); likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`;
+        const dislikeBtn = document.createElement('button'); dislikeBtn.className = 'action-btn'; dislikeBtn.title = 'Dislike'; dislikeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14-.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17-.79-.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`;
+        likeBtn.onclick = () => { likeBtn.classList.add('active'); likeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.91l-.01-.01L23 10z"/></svg>`; dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
+        dislikeBtn.onclick = () => { dislikeBtn.classList.add('active'); dislikeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14-.73v1.91l.01.01L1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17-.79-.44 1.06L9.83 23l6.59-6.59C16.78 16.05 17 15.55 17 15V5c0-1.1-.9-2-2-2zM19 3v12h4V3h-4z"/></svg>`; likeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
+        const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn'; speakBtn.title = 'Speak'; speakBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         speakBtn.onclick = (e) => {
-            const btn = e.currentTarget;
-            if(btn.querySelector('.speaking-indicator')) return; // Already speaking
+            const btn = e.currentTarget; if(btn.querySelector('.speaking-indicator')) return;
             const utterance = new SpeechSynthesisUtterance(messageText.replace(/<[^>]*>?/gm, ''));
-            const indicator = document.createElement('div');
-            indicator.className = 'speaking-indicator';
-            indicator.innerHTML = '<span></span><span></span><span></span>';
+            const indicator = document.createElement('div'); indicator.className = 'speaking-indicator'; indicator.innerHTML = '<span></span><span></span><span></span>';
             utterance.onstart = () => btn.appendChild(indicator);
-            utterance.onend = () => btn.removeChild(indicator);
-            utterance.onerror = () => btn.removeChild(indicator);
+            utterance.onend = () => { if(indicator.parentElement) btn.removeChild(indicator); };
+            utterance.onerror = () => { if(indicator.parentElement) btn.removeChild(indicator); };
             window.speechSynthesis.speak(utterance);
         };
-        const regenBtn = document.createElement('button'); regenBtn.className = 'action-btn'; regenBtn.title = 'Regenerate'; regenBtn.innerHTML = icons.regenerate;
+        const regenBtn = document.createElement('button'); regenBtn.className = 'action-btn'; regenBtn.title = 'Regenerate'; regenBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
         regenBtn.onclick = (e) => {
             e.stopPropagation(); const btn = e.currentTarget; const btnRect = btn.getBoundingClientRect(); const containerRect = document.getElementById('chat-container').getBoundingClientRect();
             regeneratePopup.style.left = `${btnRect.left - containerRect.left + (btnRect.width / 2)}px`;
@@ -187,46 +176,62 @@ document.addEventListener('DOMContentLoaded', () => {
     
     regenerateConfirmBtn.onclick = () => {
         regeneratePopup.classList.remove('show');
-        if(state.lastUserQuery){
-            regenerateResponse();
-        }
+        regenerateResponse();
     };
     
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
-        if (!activeChat || !state.lastUserQuery) return;
-        activeChat.messages.pop();
+        if (!activeChat || activeChat.messages.length < 2) return;
+        activeChat.messages.pop(); // AI ka purana jawab hatao
         saveState();
-        renderChat();
-        await processQuery(state.lastUserQuery);
+        renderChat(); // UI update karo
+        await processQuery(); // Bina naye query ke, purane context pe process karo
     }
 
     async function transmitQuery() {
         const query = userInput.value.trim();
         if (!query) return;
-        state.lastUserQuery = query;
         addMessageToHistory('user', query);
         appendMessage('user', query, false);
         userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
-        await processQuery(query);
+        await processQuery();
     }
     
-    async function processQuery(query) {
+    async function processQuery() {
+        const activeChat = state.chats[state.activeChatId];
+        if (!activeChat) return;
+
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
-        let finalPrompt = query;
+        
+        // Poori history tayyar karo
+        const formattedHistory = activeChat.messages.map(msg => {
+            const cleanContent = msg.content.replace(/<[^>]*>?/gm, '');
+            return {
+                role: msg.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: cleanContent }]
+            };
+        }).slice(0, -1); // Loader wala message hatao
+        
+        let finalPrompt = { history: formattedHistory };
+
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${query}`;
+            // Thinking mode ke liye special instruction
+            const lastUserMessage = formattedHistory.pop();
+            const instructedQuery = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${lastUserMessage.parts[0].text}`;
+            lastUserMessage.parts[0].text = instructedQuery;
+            formattedHistory.push(lastUserMessage);
         }
+
         try {
             const response = await fetch('/api/proxy', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt })
+                body: JSON.stringify({ prompt: finalPrompt.history })
             });
             if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Network error: ${response.status}`); }
             const fullText = await response.text();
-            aiBubble.parentElement.remove();
-            appendMessage('ai', fullText, true);
+            aiBubble.parentElement.remove(); // Loader hatao
+            appendMessage('ai', fullText, true); // Asli jawab dikhao
         } catch (error) {
             const errorMsg = `System Error: ${error.message}`;
             aiBubble.parentElement.remove();
