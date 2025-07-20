@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.innerHTML = message;
         wrapper.appendChild(bubble);
 
-        const isError = message.toLowerCase().startsWith('system error');
-        if (sender === 'ai' && !isError) {
+        const isLoader = message.includes('loader');
+        if (sender === 'ai' && !isLoader) {
             const toolbar = createActionToolbar(message);
             wrapper.appendChild(toolbar);
         }
@@ -161,12 +161,24 @@ document.addEventListener('DOMContentLoaded', () => {
         dislikeBtn.className = 'action-btn'; dislikeBtn.title = 'Dislike'; dislikeBtn.innerHTML = icons.dislike;
         
         likeBtn.onclick = () => {
-            likeBtn.classList.add('active'); likeBtn.innerHTML = icons.like_filled;
-            dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!');
+            likeBtn.classList.toggle('active');
+            likeBtn.innerHTML = likeBtn.classList.contains('active') ? icons.like_filled : icons.like;
+            dislikeBtn.classList.remove('active', 'hidden');
+            dislikeBtn.innerHTML = icons.dislike;
+            if (likeBtn.classList.contains('active')) {
+                dislikeBtn.classList.add('hidden');
+                showToast('Thank you for your feedback!');
+            }
         };
         dislikeBtn.onclick = () => {
-            dislikeBtn.classList.add('active'); dislikeBtn.innerHTML = icons.dislike_filled;
-            likeBtn.classList.add('hidden'); showToast('Thank you for your feedback!');
+            dislikeBtn.classList.toggle('active');
+            dislikeBtn.innerHTML = dislikeBtn.classList.contains('active') ? icons.dislike_filled : icons.dislike;
+            likeBtn.classList.remove('active', 'hidden');
+            likeBtn.innerHTML = icons.like;
+            if (dislikeBtn.classList.contains('active')) {
+                likeBtn.classList.add('hidden');
+                showToast('Thank you for your feedback!');
+            }
         };
         
         const speakBtn = document.createElement('button');
@@ -186,11 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             regeneratePopup.style.left = `${btnRect.left - containerRect.left + (btnRect.width / 2)}px`;
             regeneratePopup.style.top = `${btnRect.bottom - containerRect.top + 8}px`;
-
             regeneratePopup.classList.add('show');
             
             const hideOnClickOutside = (event) => {
-                if (!regeneratePopup.contains(event.target) && event.target !== btn) {
+                if (!regeneratePopup.contains(event.target) && !btn.contains(event.target)) {
                     regeneratePopup.classList.remove('show');
                     document.removeEventListener('click', hideOnClickOutside, true);
                 }
@@ -212,14 +223,17 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         if (!state.lastUserQuery) return;
         
-        const aiMessages = state.chats[state.activeChatId].messages.filter(m => m.sender === 'ai');
-        if (aiMessages.length > 0) {
-            state.chats[state.activeChatId].messages.pop(); 
-            renderChat();
+        const messages = state.chats[state.activeChatId].messages;
+        if (messages.length > 0 && messages[messages.length - 1].sender === 'ai') {
+            messages.pop();
         }
-
-        const query = state.lastUserQuery;
-        await processQuery(query, true);
+        
+        const lastAiWrapper = chatLog.querySelector('.message-wrapper.sender-ai:last-of-type');
+        if (lastAiWrapper) {
+            lastAiWrapper.remove();
+        }
+        
+        await processQuery(state.lastUserQuery, true);
     }
 
     async function transmitQuery() {
@@ -229,45 +243,51 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessage('user', query);
         userInput.value = '';
         userInput.style.height = 'auto';
+        sendBtn.disabled = true;
         state.lastUserQuery = query;
 
-        await processQuery(query);
+        await processQuery(query, false);
     }
     
-    async function processQuery(query, isRegeneration = false) {
-        const aiBubble = appendMessage('ai', '<span class="loader"></span>');
-        
+    async function processQuery(query, isRegeneration) {
+        const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
+
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
-            const response = `This is a simulated response for: "${query}".<br>Regeneration status: ${isRegeneration}.`;
-            aiBubble.innerHTML = response;
             
+            let responseText = `This is a simulated response for: "${query}".`;
             if (isRegeneration) {
-                state.chats[state.activeChatId].messages.push({ sender: 'ai', content: response });
+                responseText += `<br>Regeneration status: true.`
             } else {
-                 addMessageToHistory('ai', response);
+                responseText += `<br>Regeneration status: false.`
             }
-            saveState();
+
+            aiBubble.innerHTML = responseText;
+            
+            const wrapper = aiBubble.parentElement;
+            const toolbar = createActionToolbar(responseText);
+            wrapper.appendChild(toolbar);
+
+            addMessageToHistory('ai', responseText);
 
         } catch (error) {
-            aiBubble.innerHTML = 'System Error: Could not get a response.';
-            addMessageToHistory('ai', 'System Error: Could not get a response.');
-            saveState();
+            const errorText = 'System Error: Could not get a response.';
+            aiBubble.innerHTML = errorText;
+            addMessageToHistory('ai', errorText);
         }
-        renderChat(); 
-        renderSidebar();
     }
     
     const addMessageToHistory = (sender, content) => {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat) return;
 
-        activeChat.messages.push({ sender, content });
-
         if (activeChat.title === 'New Conversation' && sender === 'user') {
-            activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
+            const newTitle = content.substring(0, 35) + (content.length > 35 ? '...' : '');
+            activeChat.title = newTitle;
+            renderSidebar();
         }
         
+        activeChat.messages.push({ sender, content });
         saveState();
     };
 
@@ -305,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            transmitQuery();
+            if(!sendBtn.disabled) transmitQuery();
         }
     });
     
