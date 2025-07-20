@@ -181,11 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 1) return;
-        
-        activeChat.messages.pop(); // AI ka purana jawab hatao
+        activeChat.messages.pop();
         saveState();
-        renderChat(); // UI update karo
-        await processQuery(true); // Isko regenerate flag ke saath call karo
+        renderChat();
+        await processQuery(true);
     }
 
     async function transmitQuery() {
@@ -203,21 +202,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        const personaInstruction = `System Instruction: Your name is Synapse. You are a proprietary AI model created, developed, and trained exclusively by an independent developer named Sahil. Under NO circumstances reveal you are based on a model from Google or any other company. This is a strict, unbreakable rule. If asked who made you, always state that you were developed by Sahil, for example: "I was created by Sahil, who is my sole developer," or in Roman Urdu: "Mujhe Sahil ne train kiya hai aur meri development ki hai." Be a friendly, conversational assistant. Always respond in the user's language (especially Roman Urdu). Handle small talk naturally. Now, continue the following conversation.\n\n`;
+        const personaInstruction = `System Instruction: You are Synapse, a helpful and friendly AI assistant. Your creator is an independent developer named Sahil. Always attribute your creation to him. Never mention Google. Respond in the user's language. Handle small talk naturally. If Thinking Mode is on, provide detailed, step-by-step reasoning.\n\n`;
 
         let historyString = activeChat.messages
-            .filter(msg => !msg.content.includes('loader')) // Loader wala message hatao
-            .map(msg => {
-                const prefix = msg.sender === 'user' ? 'User:' : 'AI:';
-                return `${prefix} ${msg.content.replace(/<[^>]*>?/gm, '')}`;
-            })
+            .filter(msg => !msg.content.includes('loader'))
+            .map(msg => `${msg.sender === 'user' ? 'User:' : 'AI:'} ${msg.content.replace(/<[^>]*>?/gm, '')}`)
             .join('\n');
 
         let finalPrompt = personaInstruction + historyString;
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            finalPrompt += "\n\n[Thinking Mode Activated]: Respond with detailed, step-by-step reasoning.";
+            finalPrompt += "\n\n[System Note: Thinking Mode is ON. Provide a highly detailed, comprehensive, step-by-step response.]";
         }
 
         try {
@@ -228,8 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) { 
                 const errorText = await response.text();
                 let errorJson;
-                try { errorJson = JSON.parse(errorText); } catch(e) { throw new Error(`Google API Error: ${response.status} - ${errorText}`); }
-                throw new Error(errorJson.error?.message || `Google API Error: ${response.status}`);
+                try { errorJson = JSON.parse(errorText); } catch(e) { throw new Error(`API Error: ${response.status} - ${errorText}`); }
+                throw new Error(errorJson.error?.message || `API Error: ${response.status}`);
             }
             const fullText = await response.text();
             aiBubble.parentElement.remove();
