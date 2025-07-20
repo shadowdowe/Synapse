@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 1) return;
+        
         activeChat.messages.pop();
         saveState();
         renderChat();
@@ -202,18 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        const personaInstruction = `System Instruction: You are Synapse, a helpful and friendly AI assistant. Your creator is an independent developer named Sahil. Always attribute your creation to him. Never mention Google. Respond in the user's language. Handle small talk naturally. If Thinking Mode is on, provide detailed, step-by-step reasoning.\n\n`;
+        const personaInstruction = `System Instruction: You are Synapse, a helpful AI by Sahil. Be conversational. Respond in the user's language (especially Roman Urdu). Never mention Google. If asked who made you, always credit Sahil. For small talk, answer naturally. If Thinking Mode is on, provide detailed reasoning.\n\n`;
 
-        let historyString = activeChat.messages
-            .filter(msg => !msg.content.includes('loader'))
-            .map(msg => `${msg.sender === 'user' ? 'User:' : 'AI:'} ${msg.content.replace(/<[^>]*>?/gm, '')}`)
-            .join('\n');
-
-        let finalPrompt = personaInstruction + historyString;
+        let finalPrompt;
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            finalPrompt += "\n\n[System Note: Thinking Mode is ON. Provide a highly detailed, comprehensive, step-by-step response.]";
+            const lastUserMessage = activeChat.messages.filter(msg => msg.sender === 'user').pop();
+            const lastQuery = lastUserMessage ? lastUserMessage.content.replace(/<[^>]*>?/gm, '') : '';
+            finalPrompt = `System Instruction: Provide a detailed, step-by-step reasoning process for the following query: "${lastQuery}"`;
+        } else {
+            let historyString = activeChat.messages
+                .filter(msg => !msg.content.includes('loader'))
+                .map(msg => `${msg.sender === 'user' ? 'User:' : 'AI:'} ${msg.content.replace(/<[^>]*>?/gm, '')}`)
+                .join('\n');
+            finalPrompt = personaInstruction + historyString;
         }
 
         try {
