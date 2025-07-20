@@ -182,10 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function regenerateResponse() {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat || activeChat.messages.length < 2) return;
+        
         activeChat.messages.pop(); // AI ka purana jawab hatao
         saveState();
         renderChat(); // UI update karo
-        await processQuery(); // Bina naye query ke, purane context pe process karo
+        await processQuery(true); // Isko regenerate flag ke saath call karo
     }
 
     async function transmitQuery() {
@@ -194,44 +195,59 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessageToHistory('user', query);
         appendMessage('user', query, false);
         userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
-        await processQuery();
+        await processQuery(false);
     }
     
-    async function processQuery() {
+    async function processQuery(isRegenerating = false) {
         const activeChat = state.chats[state.activeChatId];
         if (!activeChat) return;
 
         const aiBubble = appendMessage('ai', '<span class="loader"></span>', false);
         
-        // Poori history tayyar karo
-        const formattedHistory = activeChat.messages.map(msg => {
-            const cleanContent = msg.content.replace(/<[^>]*>?/gm, '');
-            return {
-                role: msg.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: cleanContent }]
-            };
-        }).slice(0, -1); // Loader wala message hatao
-        
-        let finalPrompt = { history: formattedHistory };
+        // History ko ek simple string mein badlo
+        let historyString = activeChat.messages
+            .slice(0, -1) // Loader wala message hatao
+            .map(msg => {
+                const prefix = msg.sender === 'user' ? 'User:' : 'AI:';
+                return `${prefix} ${msg.content.replace(/<[^>]*>?/gm, '')}`;
+            })
+            .join('\n\n');
+
+        let finalPrompt = historyString;
 
         if (state.isThinkingMode) {
             thinkingModeBtn.classList.add('thinking-in-progress');
-            // Thinking mode ke liye special instruction
-            const lastUserMessage = formattedHistory.pop();
-            const instructedQuery = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. User Query: ${lastUserMessage.parts[0].text}`;
-            lastUserMessage.parts[0].text = instructedQuery;
-            formattedHistory.push(lastUserMessage);
+            const lastUserMessage = activeChat.messages.find(m => m.sender === 'user');
+            const instructedQuery = `System Instruction: Provide a detailed, step-by-step reasoning process. Be elaborate and comprehensive. Based on the conversation history, answer the last user query: "${lastUserMessage.content}"`;
+            finalPrompt = historyString.replace(lastUserMessage.content, instructedQuery);
         }
 
         try {
             const response = await fetch('/api/proxy', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: finalPrompt.history })
+                body: JSON.stringify({ prompt: finalPrompt })
             });
-            if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || `Network error: ${response.status}`); }
+            if (!response.ok) { 
+                const errorText = await response.text();
+                let errorJson;
+                try {
+                    errorJson = JSON.parse(errorText);
+                } catch(e) {
+                    throw new Error(`Google API Error: ${response.status} - ${errorText}`);
+                }
+                throw new Error(errorJson.error || `Google API Error: ${response.status}`);
+            }
             const fullText = await response.text();
-            aiBubble.parentElement.remove(); // Loader hatao
-            appendMessage('ai', fullText, true); // Asli jawab dikhao
+            aiBubble.parentElement.remove();
+            
+            if (isRegenerating) {
+                activeChat.messages.push({ sender: 'ai', content: fullText });
+                saveState();
+                renderChat();
+            } else {
+                appendMessage('ai', fullText, true);
+            }
+            
         } catch (error) {
             const errorMsg = `System Error: ${error.message}`;
             aiBubble.parentElement.remove();
