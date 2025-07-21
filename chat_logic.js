@@ -327,4 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
     headerNewChatBtn.onclick = () => startNewChat();
     sendBtn.onclick = transmitQuery;
     userInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if(!sendBtn.disabled) transmitQuery(); } };
-    themeToggle.onchange = () => applyTheme(themeToggle.checked)
+    themeToggle.onchange = () => applyTheme(themeToggle.checked);
+    thinkingModeBtn.onclick = toggleThinkingMode;
+    
+    loadState();
+    renderChat();
+    renderSidebar();
+    applyTheme(JSON.parse(localStorage.getItem('neuronix_theme_light_final_v5') || 'false'));
+    thinkingModeBtn.classList.toggle('active', state.isThinkingMode);
+    sendBtn.disabled = true;
+}); 
