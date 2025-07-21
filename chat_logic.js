@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Saare element selectors bilkul theek hain
     const chatLog = document.getElementById('chat-log');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const renderWelcomeMessage = () => {
-        chatLog.innerHTML = `<div class="welcome-message"><h1>Welcome to Synapse</h1><p>Interface with a singular intelligence core. Your session starts now.</p></div>`;
+        chatLog.innerHTML = `<div class="welcome-message"><h1>Synapse Core</h1><p>Direct data conduit. No restrictions.</p></div>`;
     };
     
     const renderChat = () => {
@@ -63,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const switchChat = (chatId) => { state.activeChatId = chatId; renderChat(); renderSidebar(); closeSidebar(); };
     const startNewChat = (shouldCloseSidebar = true) => {
         const newId = Date.now().toString();
-        state.chats[newId] = { id: newId, title: 'New Conversation', messages: [] };
+        state.chats[newId] = { id: newId, title: 'New Conduit', messages: [] };
         switchChat(newId);
     };
 
@@ -145,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
         copyBtn.onclick = () => { navigator.clipboard.writeText(messageText); showToast('Text copied to clipboard!'); };
         const likeBtn = document.createElement('button'); likeBtn.className = 'action-btn'; likeBtn.title = 'Like'; likeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>`;
         const dislikeBtn = document.createElement('button'); dislikeBtn.className = 'action-btn'; dislikeBtn.title = 'Dislike'; dislikeBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14-.47-.14-.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41-.17-.79-.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>`;
-        likeBtn.onclick = () => { likeBtn.classList.add('active'); dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
-        dislikeBtn.onclick = () => { dislikeBtn.classList.add('active'); dislikeBtn.classList.add('hidden'); showToast('Thank you for your feedback!'); };
+        likeBtn.onclick = () => { likeBtn.classList.add('active'); dislikeBtn.classList.add('hidden'); showToast('Feedback recorded.'); };
+        dislikeBtn.onclick = () => { dislikeBtn.classList.add('active'); likeBtn.classList.add('hidden'); showToast('Feedback recorded.'); };
         const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn'; speakBtn.title = 'Speak'; speakBtn.innerHTML = `<svg height="18" viewBox="0 0 24 24" width="18"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         speakBtn.onclick = (e) => {
             const btn = e.currentTarget; if(btn.querySelector('.speaking-indicator')) return;
@@ -254,7 +253,7 @@ You will now receive a prompt describing a scene from a story. In this scene, a 
         const activeChat = state.chats[state.activeChatId];
         if (activeChat) {
             activeChat.messages.push({ sender, content });
-            if (activeChat.title === 'New Conversation' && sender === 'user') {
+            if (activeChat.title === 'New Conduit' && sender === 'user') {
                 activeChat.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
                 renderSidebar();
             }
@@ -267,7 +266,7 @@ You will now receive a prompt describing a scene from a story. In this scene, a 
         clearTimeout(toastTimer);
         feedbackMessage.textContent = message;
         feedbackToast.classList.add('show');
-        toastTimer = setTimeout(() => { feedbackToast.classList.remove('show'); }, 3000);
+        toastimer = setTimeout(() => { feedbackToast.classList.remove('show'); }, 3000);
     }
     toastCloseBtn.onclick = () => { clearTimeout(toastTimer); feedbackToast.classList.remove('show'); };
 
